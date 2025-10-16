@@ -15,7 +15,6 @@ namespace miit::algebra
         std::vector<int> data;
 
     public:
-        // Конструкторы по умолчанию
         Matrix() = default;
         Matrix(const Matrix&) = default;
         Matrix(Matrix&&) = default;
@@ -57,7 +56,6 @@ namespace miit::algebra
         */
         const std::vector<int>& get_data() const;
 
-        // Операторы
         Matrix& operator=(const Matrix&) = default;
         Matrix& operator=(Matrix&&) = default;
 
