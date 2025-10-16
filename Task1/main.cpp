@@ -1,6 +1,7 @@
 ﻿#include <iostream>
 #include <memory>
 #include <locale>
+#include <limits>
 #include "../decision/Matrix.h"
 #include "../decision/RandomGenerator.h"
 #include "../decision/IStreamGenerator.h"
@@ -11,6 +12,128 @@
 using namespace miit::algebra;
 using namespace std;
 
+// Enum для выбора способа заполнения матрицы
+enum class FillMethod {
+    RANDOM = 1,
+    KEYBOARD = 2
+};
+
+// Функция для выбора способа заполнения
+FillMethod chooseFillMethod() {
+    int choice;
+    while (true) {
+        cout << "\nВыберите способ заполнения матрицы:\n";
+        cout << static_cast<int>(FillMethod::RANDOM) << " - Случайное заполнение\n";
+        cout << static_cast<int>(FillMethod::KEYBOARD) << " - Ввод с клавиатуры\n";
+        cout << "Ваш выбор: ";
+
+        cin >> choice;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Ошибка! Введите число " << static_cast<int>(FillMethod::RANDOM)
+                << " или " << static_cast<int>(FillMethod::KEYBOARD) << endl;
+            continue;
+        }
+
+        if (choice == static_cast<int>(FillMethod::RANDOM) ||
+            choice == static_cast<int>(FillMethod::KEYBOARD)) {
+            return static_cast<FillMethod>(choice);
+        }
+        else {
+            cout << "Неверный выбор! Введите " << static_cast<int>(FillMethod::RANDOM)
+                << " или " << static_cast<int>(FillMethod::KEYBOARD) << endl;
+        }
+    }
+}
+
+// Функция для получения размера матрицы
+size_t getMatrixSize() {
+    int size;
+    while (true) {
+        cout << "Введите размер матрицы: ";
+        cin >> size;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Ошибка! Введите целое число." << endl;
+            continue;
+        }
+
+        if (size <= 0) {
+            cout << "Размер матрицы должен быть положительным числом!" << endl;
+            continue;
+        }
+
+        return static_cast<size_t>(size);
+    }
+}
+
+// Функция для получения диапазона случайных чисел
+pair<int, int> getRandomRange() {
+    int min, max;
+
+    while (true) {
+        cout << "Введите минимальное значение: ";
+        cin >> min;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Ошибка! Введите целое число." << endl;
+            continue;
+        }
+        break;
+    }
+
+    while (true) {
+        cout << "Введите максимальное значение: ";
+        cin >> max;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Ошибка! Введите целое число." << endl;
+            continue;
+        }
+
+        if (max < min) {
+            cout << "Максимальное значение не может быть меньше минимального!" << endl;
+            continue;
+        }
+        break;
+    }
+
+    return { min, max };
+}
+
+// Функция для ввода матрицы с клавиатуры
+vector<int> inputMatrixFromKeyboard(size_t size) {
+    vector<int> matrix_data;
+    matrix_data.reserve(size);
+
+    cout << "Введите " << size << " элементов матрицы:" << endl;
+    for (size_t i = 0; i < size; i++) {
+        int value;
+        cout << "Элемент " << (i + 1) << ": ";
+        cin >> value;
+
+        if (cin.fail()) {
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cout << "Ошибка! Введите целое число." << endl;
+            i--; // Повторяем ввод для этого элемента
+            continue;
+        }
+
+        matrix_data.push_back(value);
+    }
+
+    return matrix_data;
+}
+
 int main()
 {
     setlocale(LC_ALL, "Russian");
@@ -19,13 +142,41 @@ int main()
     {
         cout << "=== Демонстрация работы с матрицей ===" << endl;
 
-        // Создаем исходные данные
-        vector<int> original_data = { 10, 13, 25, 30, 37 };
-        cout << "Исходные данные: [10, 13, 25, 30, 37]" << endl;
+        // Выбор способа заполнения
+        FillMethod method = chooseFillMethod();
+
+        unique_ptr<Matrix> main_matrix;
+        vector<int> original_data;
+
+        // Создание и заполнение матрицы в зависимости от выбора
+        switch (method) {
+        case FillMethod::RANDOM: {
+            size_t size = getMatrixSize();
+            auto [min, max] = getRandomRange();
+
+            main_matrix = make_unique<Matrix>(size);
+            main_matrix->fill(make_unique<RandomGenerator>(min, max));
+            original_data = main_matrix->get_data();
+
+            cout << "\nСоздана матрица размером " << size
+                << " со случайными числами от " << min << " до " << max << endl;
+            break;
+        }
+
+        case FillMethod::KEYBOARD: {
+            size_t size = getMatrixSize();
+            original_data = inputMatrixFromKeyboard(size);
+            main_matrix = make_unique<Matrix>(original_data);
+            cout << "\nМатрица успешно введена с клавиатуры." << endl;
+            break;
+        }
+        }
+
+        cout << "Исходная матрица: " << main_matrix->to_string() << endl;
 
         // Задание 1 - создаем КОПИЮ для задания 1
         cout << "\n--- Задание 1 ---" << endl;
-        auto task1_matrix = make_unique<Matrix>(original_data); // Копия исходных данных
+        auto task1_matrix = make_unique<Matrix>(original_data);
         cout << "Матрица для задания 1: " << task1_matrix->to_string() << endl;
         auto task1 = make_unique<Task1Exercise>(move(task1_matrix), nullptr);
         task1->Task1();
@@ -33,7 +184,7 @@ int main()
 
         // Задание 2 - создаем НОВУЮ КОПИЮ для задания 2  
         cout << "\n--- Задание 2 ---" << endl;
-        auto task2_matrix = make_unique<Matrix>(original_data); // Новая копия исходных данных
+        auto task2_matrix = make_unique<Matrix>(original_data);
         cout << "Матрица для задания 2: " << task2_matrix->to_string() << endl;
         auto task2 = make_unique<Task2Exercise>(move(task2_matrix), nullptr, 3);
         task2->Task2();
@@ -41,28 +192,17 @@ int main()
 
         // Задание 3 - создаем ЕЩЕ ОДНУ КОПИЮ для задания 3
         cout << "\n--- Задание 3 ---" << endl;
-        auto task3_matrix = make_unique<Matrix>(original_data); // Еще одна копия
+        auto task3_matrix = make_unique<Matrix>(original_data);
         cout << "Матрица для задания 3: " << task3_matrix->to_string() << endl;
         auto task3 = make_unique<Task3Exercise>(move(task3_matrix), nullptr);
         auto result3 = task3->Task3();
         cout << "Результат задания 3: " << result3->to_string() << endl;
 
-        // Демонстрация с разными данными
+        // Дополнительная демонстрация
         cout << "\n=== Дополнительная демонстрация ===" << endl;
 
-        // Демо 1: Случайное заполнение
-        cout << "\n1. Случайное заполнение матрицы:" << endl;
-        auto random_matrix = make_unique<Matrix>(8);
-        random_matrix->fill(make_unique<RandomGenerator>(1, 50));
-        cout << "Случайная матрица: " << random_matrix->to_string() << endl;
-
-        // Применяем задание 1 к случайной матрице
-        auto random_task1 = make_unique<Task1Exercise>(move(random_matrix), nullptr);
-        random_task1->Task1();
-        cout << "После задания 1: " << random_task1->get_matrix_string() << endl;
-
-        // Демо 2: Операторы матрицы
-        cout << "\n2. Демонстрация операторов матрицы:" << endl;
+        // Демо 1: Операторы матрицы
+        cout << "\n1. Демонстрация операторов матрицы:" << endl;
         Matrix demo_matrix(vector<int>{1, 2, 3});
         cout << "Исходная: " << demo_matrix.to_string() << endl;
 
@@ -75,6 +215,18 @@ int main()
 
         demo_matrix[0] = 99; // Изменяем по индексу
         cout << "После demo_matrix[0] = 99: " << demo_matrix.to_string() << endl;
+
+        // Демо 2: Еще одна случайная матрица
+        cout << "\n2. Дополнительная случайная матрица:" << endl;
+        auto random_matrix = make_unique<Matrix>(6);
+        random_matrix->fill(make_unique<RandomGenerator>(10, 20));
+        cout << "Случайная матрица: " << random_matrix->to_string() << endl;
+
+        // Применяем задание 1 к случайной матрице
+        auto random_copy = make_unique<Matrix>(random_matrix->get_data());
+        auto random_task1 = make_unique<Task1Exercise>(move(random_copy), nullptr);
+        random_task1->Task1();
+        cout << "После задания 1: " << random_task1->get_matrix_string() << endl;
 
         cout << "\nДемонстрация завершена успешно!" << endl;
     }
