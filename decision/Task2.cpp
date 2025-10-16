@@ -1,6 +1,6 @@
 ﻿#include "Task2.h"
 #include <vector>
-#include <cmath> // для std::abs
+#include <cmath> 
 
 namespace miit::algebra
 {
