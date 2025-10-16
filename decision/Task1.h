@@ -14,10 +14,7 @@ namespace miit::algebra
         /**
         * @brief Замена первого элемента, кратного 5, на 0
         */
-        void Task1() override;
+        void Task1();
 
-        void Task2() override {}
-
-        std::unique_ptr<Matrix> Task3() override { return nullptr; }
     };
 }

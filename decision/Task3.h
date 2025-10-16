@@ -11,13 +11,10 @@ namespace miit::algebra
     public:
         using Exercise::Exercise;
 
-        void Task1() override {}
-        void Task2() override {}
-
         /**
         * @brief Создание новой матрицы: m[i] = -p[i] * (i+1) для внутренних элементов
         * @return новая матрица
         */
-        std::unique_ptr<Matrix> Task3() override;
+        std::unique_ptr<Matrix> Task3();
     };
 }

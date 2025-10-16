@@ -59,11 +59,27 @@ namespace miit::algebra
 
     int& Matrix::operator[](size_t index)
     {
+        if (index >= data.size()) {
+            throw std::out_of_range(
+                "Выход за границы матрицы: индекс " +
+                std::to_string(index) +
+                " при размере " +
+                std::to_string(data.size())
+            );
+        }
         return data[index];
     }
 
     const int& Matrix::operator[](size_t index) const
     {
+        if (index >= data.size()) {
+            throw std::out_of_range(
+                "Выход за границы матрицы: индекс " +
+                std::to_string(index) +
+                " при размере " +
+                std::to_string(data.size())
+            );
+        }
         return data[index];
     }
 

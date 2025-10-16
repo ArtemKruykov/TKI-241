@@ -20,13 +20,9 @@ namespace miit::algebra
         */
         Task2Exercise(std::unique_ptr<Matrix> matrix, std::unique_ptr<Generator> generator, int k);
 
-        void Task1() override {}
-
         /**
         * @brief Вставка числа K после нечетных элементов, содержащих цифру K
         */
-        void Task2() override;
-
-        std::unique_ptr<Matrix> Task3() override { return nullptr;}
+        void Task2();
     };
 }

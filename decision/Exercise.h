@@ -28,21 +28,6 @@ namespace miit::algebra
         virtual ~Exercise() = default;
 
         /**
-        * @brief Виртуальный метод для выполнения задания 1
-        */
-        virtual void Task1() = 0;
-
-        /**
-        * @brief Виртуальный метод для выполнения задания 2
-        */
-        virtual void Task2() = 0;
-
-        /**
-        * @brief Виртуальный метод для выполнения задания 3
-        */
-        virtual std::unique_ptr<Matrix> Task3() = 0;
-
-        /**
         * @brief Возвращает строковое представление матрицы
         * @return строка с матрицей
         */
