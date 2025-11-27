@@ -1,4 +1,4 @@
-﻿#include "CppUnitTest.h"
+﻿﻿#include "CppUnitTest.h"
 #include "../decision2/PoliceDatabase.h"
 #include "../decision2/Vehicle.h"
 #include "../decision2/Owner.h"
@@ -35,7 +35,11 @@ namespace PoliceDatabaseTests
         {
             PoliceDatabase database;
             auto owner = std::make_shared<Owner>("1234567890", "John Doe", "Moscow, Street 1");
-            database.addOwner(owner);
+            auto vehicle = std::make_shared<Vehicle>("A123BC777", "Toyota", "Camry", "Black", 2020, "ENG123456");
+
+            vehicle->setCurrentOwner(owner);
+            owner->addVehicle(vehicle);
+            database.addVehicle(vehicle);
 
             auto owners = database.getAllOwners();
             Assert::AreEqual(size_t(1), owners.size());
@@ -52,7 +56,6 @@ namespace PoliceDatabaseTests
             vehicle->setCurrentOwner(owner);
             owner->addVehicle(vehicle);
 
-            database.addOwner(owner);
             database.addVehicle(vehicle);
 
             auto foundOwner = database.findOwnerByLicensePlate("A123BC777");
@@ -170,8 +173,16 @@ namespace PoliceDatabaseTests
             auto owner1 = std::make_shared<Owner>("1111111111", "John Doe", "Address 1");
             auto owner2 = std::make_shared<Owner>("2222222222", "Jane Smith", "Address 2");
 
-            database.addOwner(owner1);
-            database.addOwner(owner2);
+            auto vehicle1 = std::make_shared<Vehicle>("A111AA777", "BMW", "X5", "White", 2021, "ENG111111");
+            auto vehicle2 = std::make_shared<Vehicle>("B222BB777", "Audi", "A4", "Black", 2020, "ENG222222");
+
+            vehicle1->setCurrentOwner(owner1);
+            vehicle2->setCurrentOwner(owner2);
+            owner1->addVehicle(vehicle1);
+            owner2->addVehicle(vehicle2);
+
+            database.addVehicle(vehicle1);
+            database.addVehicle(vehicle2);
 
             auto allOwners = database.getAllOwners();
             Assert::AreEqual(size_t(2), allOwners.size());
@@ -211,6 +222,43 @@ namespace PoliceDatabaseTests
             auto accidentVehicles = database.getAccidentVehiclesInPeriod(startDate, endDate);
             Assert::AreEqual(size_t(1), accidentVehicles.size());
             Assert::AreEqual(std::string("A111AA777"), accidentVehicles[0]->getLicensePlate());
+        }
+
+        TEST_METHOD(TestOwnerAutoAddition)
+        {
+            PoliceDatabase database;
+
+            auto owner = std::make_shared<Owner>("1234567890", "Test Owner", "Test Address");
+            auto vehicle = std::make_shared<Vehicle>("TEST777", "TestBrand", "TestModel", "Red", 2020, "TESTENGINE");
+
+            vehicle->setCurrentOwner(owner);
+            owner->addVehicle(vehicle);
+
+            database.addVehicle(vehicle);
+
+            auto owners = database.getAllOwners();
+            Assert::AreEqual(size_t(1), owners.size());
+            Assert::AreEqual(std::string("Test Owner"), owners[0]->getFullName());
+        }
+
+        TEST_METHOD(TestDuplicateOwnerPrevention)
+        {
+            PoliceDatabase database;
+
+            auto owner = std::make_shared<Owner>("1234567890", "Test Owner", "Test Address");
+            auto vehicle1 = std::make_shared<Vehicle>("TEST1777", "Brand1", "Model1", "Red", 2020, "ENG1");
+            auto vehicle2 = std::make_shared<Vehicle>("TEST2777", "Brand2", "Model2", "Blue", 2021, "ENG2");
+
+            vehicle1->setCurrentOwner(owner);
+            vehicle2->setCurrentOwner(owner);
+            owner->addVehicle(vehicle1);
+            owner->addVehicle(vehicle2);
+
+            database.addVehicle(vehicle1);
+            database.addVehicle(vehicle2);
+
+            auto owners = database.getAllOwners();
+            Assert::AreEqual(size_t(1), owners.size());
         }
     };
 
@@ -405,9 +453,6 @@ namespace PoliceDatabaseTests
 
             auto owner1 = std::make_shared<Owner>("4500112233", "Ivan Ivanov", "Moscow, Lenina 1");
             auto owner2 = std::make_shared<Owner>("4500445566", "Petr Petrov", "Moscow, Pushkina 10");
-
-            database.addOwner(owner1);
-            database.addOwner(owner2);
 
             auto vehicle1 = std::make_shared<Vehicle>("A123BC777", "Toyota", "Camry", "Black", 2018, "T123456789");
             auto vehicle2 = std::make_shared<Vehicle>("B456DE777", "BMW", "X5", "White", 2020, "B987654321");
