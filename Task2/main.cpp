@@ -13,6 +13,22 @@
 using namespace std;
 
 /**
+ * @brief Перечисление пунктов главного меню
+ */
+enum class MenuChoice {
+    EXIT = 0,
+    VEHICLE_INFO_BY_PLATE = 1,
+    OWNER_INFO_BY_PLATE = 2,
+    VEHICLE_INFO_BY_ENGINE = 3,
+    STOLEN_VEHICLES_LIST = 4,
+    ACCIDENT_VEHICLES_IN_PERIOD = 5,
+    MOST_STOLEN_BRANDS = 6,
+    DATABASE_STATISTICS = 7,
+    ADD_NEW_VEHICLE = 8,
+    MARK_VEHICLE_STOLEN = 9
+};
+
+/**
  * @brief Отображает главное меню системы ГАИ
  */
 void showMainMenu();
@@ -21,8 +37,9 @@ void showMainMenu();
  * @brief Обрабатывает выбор пользователя из главного меню
  * @param choice Выбранный пункт меню
  * @param database Ссылка на базу данных ГАИ
+ * @return true если программа должна продолжить работу, false если нужно выйти
  */
-void handleUserChoice(int choice, PoliceDatabase& database);
+bool handleUserChoice(MenuChoice choice, PoliceDatabase& database);
 
 /**
  * @brief Демонстрирует поиск автомобиля по государственному номеру
@@ -87,208 +104,302 @@ int main() {
     setlocale(LC_ALL, "Russian");
 
     PoliceDatabase database;
-
     createTestData(database);
 
-    cout << " СИСТЕМА БАЗЫ ДАННЫХ ГАИ \n\n";
+    string systemTitle = " СИСТЕМА БАЗЫ ДАННЫХ ГАИ ";
+    cout << systemTitle << "\n\n";
 
-    while (true) {
-        showMainMenu();
+    showMainMenu();
 
-        int choice;
-        cout << "Выберите операцию: ";
-        cin >> choice;
-        cin.ignore(); 
+    string choicePrompt = "Выберите операцию: ";
+    cout << choicePrompt;
 
-        if (choice == 0) {
-            cout << "Выход из программы...\n";
-            break;
-        }
+    int choice;
+    cin >> choice;
+    cin.ignore();
 
-        handleUserChoice(choice, database);
+    if (cin.fail()) {
+        string errorMessage = "Ошибка ввода. Программа завершена.";
+        cout << errorMessage << endl;
+        return 1;
+    }
+
+    bool shouldContinue = handleUserChoice(static_cast<MenuChoice>(choice), database);
+
+    if (!shouldContinue) {
+        string exitMessage = "Программа завершена.";
+        cout << exitMessage << endl;
+        return 0;
     }
 
     return 0;
 }
 
 void addNewVehicle(PoliceDatabase& database) {
-    cout << "\n ДОБАВЛЕНИЕ НОВОГО АВТОМОБИЛЯ \n";
+    string addVehicleTitle = " ДОБАВЛЕНИЕ НОВОГО АВТОМОБИЛЯ ";
+    cout << "\n" << addVehicleTitle << "\n";
 
-    string licensePlate = getInput("Гос. номер: ");
-    string brand = getInput("Марка: ");
-    string model = getInput("Модель: ");
-    string color = getInput("Цвет: ");
+    string licensePlatePrompt = "Гос. номер: ";
+    string brandPrompt = "Марка: ";
+    string modelPrompt = "Модель: ";
+    string colorPrompt = "Цвет: ";
+    string yearPrompt = "Год выпуска: ";
+    string enginePrompt = "Номер двигателя: ";
 
+    string licensePlate = getInput(licensePlatePrompt);
+    string brand = getInput(brandPrompt);
+    string model = getInput(modelPrompt);
+    string color = getInput(colorPrompt);
+
+    cout << yearPrompt;
     int year;
-    cout << "Год выпуска: ";
     cin >> year;
+
+    if (cin.fail()) {
+        string errorMessage = "Ошибка ввода года. Программа завершена.";
+        cout << errorMessage << endl;
+        exit(1);
+    }
     cin.ignore();
 
-    string engineNumber = getInput("Номер двигателя: ");
+    string engineNumber = getInput(enginePrompt);
 
     auto vehicle = make_shared<Vehicle>(licensePlate, brand, model, color, year, engineNumber);
-    database.addVehicle(vehicle);
 
-    cout << "Автомобиль успешно добавлен!\n";
-}
+    string addOwnerTitle = "ДОБАВЛЕНИЕ ВЛАДЕЛЬЦА ДЛЯ АВТОМОБИЛЯ:";
+    cout << "\n" << addOwnerTitle << "\n";
 
-void addNewOwner(PoliceDatabase& database) {
-    cout << "\n ДОБАВЛЕНИЕ НОВОГО ВЛАДЕЛЬЦА \n";
+    string passportPrompt = "Номер паспорта владельца: ";
+    string namePrompt = "ФИО владельца: ";
+    string addressPrompt = "Адрес владельца: ";
+    string successMessage = "Автомобиль и владелец успешно добавлены!";
 
-    string passport = getInput("Номер паспорта: ");
-    string name = getInput("ФИО: ");
-    string address = getInput("Адрес: ");
+    string passport = getInput(passportPrompt);
+    string name = getInput(namePrompt);
+    string address = getInput(addressPrompt);
 
     auto owner = make_shared<Owner>(passport, name, address);
-    database.addOwner(owner);
+    vehicle->setCurrentOwner(owner);
+    owner->addVehicle(vehicle);
 
-    cout << "Владелец успешно добавлен!\n";
+    database.addVehicle(vehicle);
+
+    cout << successMessage << endl;
 }
 
 void markVehicleAsStolen(PoliceDatabase& database) {
-    cout << "\n ОТМЕТКА АВТОМОБИЛЯ КАК УГНАННОГО \n";
+    string markStolenTitle = " ОТМЕТКА АВТОМОБИЛЯ КАК УГНАННОГО ";
+    cout << "\n" << markStolenTitle << "\n";
 
-    string licensePlate = getInput("Введите гос. номер угнанного автомобиля: ");
+    string licensePlatePrompt = "Введите гос. номер угнанного автомобиля: ";
+    string successMessage = " отмечен как угнанный!";
+    string notFoundMessage = " не найден!";
+
+    string licensePlate = getInput(licensePlatePrompt);
     auto vehicle = database.findVehicleByLicensePlate(licensePlate);
 
     if (vehicle) {
         vehicle->setStolen(true);
-        cout << "Автомобиль '" << licensePlate << "' отмечен как угнанный!\n";
+        cout << "Автомобиль '" << licensePlate << "'" << successMessage << endl;
     }
     else {
-        cout << "Автомобиль с номером '" << licensePlate << "' не найден!\n";
+        cout << "Автомобиль с номером '" << licensePlate << "'" << notFoundMessage << endl;
     }
 }
 
 void showMainMenu() {
-    cout << "\n ГЛАВНОЕ МЕНЮ СИСТЕМЫ ГАИ \n";
-    cout << "1 - Информация об автомобиле по гос. номеру\n";
-    cout << "2 - Информация о владельце по гос. номеру\n";
-    cout << "3 - Информация об автомобиле по номеру двигателя\n";
-    cout << "4 - Список угнанных автомобилей\n";
-    cout << "5 - Автомобили в ДТП за период\n";
-    cout << "6 - Наиболее угоняемые марки\n";
-    cout << "7 - Статистика базы данных\n";
-    cout << "8 - Добавить новый автомобиль\n";
-    cout << "9 - Добавить нового владельца\n";
-    cout << "10 - Отметить автомобиль как угнанный\n";
-    cout << "0 - Выход\n";
+    string menuTitle = " ГЛАВНОЕ МЕНЮ СИСТЕМЫ ГАИ ";
+    string option1 = "1 - Информация об автомобиле по гос. номеру";
+    string option2 = "2 - Информация о владельце по гос. номеру";
+    string option3 = "3 - Информация об автомобиле по номеру двигателя";
+    string option4 = "4 - Список угнанных автомобилей";
+    string option5 = "5 - Автомобили в ДТП за период";
+    string option6 = "6 - Наиболее угоняемые марки";
+    string option7 = "7 - Статистика базы данных";
+    string option8 = "8 - Добавить новый автомобиль";
+    string option9 = "9 - Отметить автомобиль как угнанный";
+    string option0 = "0 - Выход";
+
+    cout << "\n" << menuTitle << "\n";
+    cout << option1 << "\n";
+    cout << option2 << "\n";
+    cout << option3 << "\n";
+    cout << option4 << "\n";
+    cout << option5 << "\n";
+    cout << option6 << "\n";
+    cout << option7 << "\n";
+    cout << option8 << "\n";
+    cout << option9 << "\n";
+    cout << option0 << "\n";
     cout << "\n";
 }
 
-void handleUserChoice(int choice, PoliceDatabase& database) {
-    switch (choice) {
-    case 1:
-        demonstrateVehicleSearch(database);
-        break;
-    case 2:
-        demonstrateOwnerSearch(database);
-        break;
-    case 3:
-        demonstrateEngineNumberSearch(database);
-        break;
-    case 4:
-        demonstrateStolenVehicles(database);
-        break;
-    case 5:
-        demonstrateAccidentVehicles(database);
-        break;
-    case 6:
-        demonstrateMostStolenBrands(database);
-        break;
-    case 7:
-        showDatabaseStatistics(database);
-        break;
-    case 8:
-        addNewVehicle(database);
-        break;
-    case 9:
-        addNewOwner(database);
-        break;
-    case 10:
-        markVehicleAsStolen(database);
-        break;
-    default:
-        cout << "Неверный выбор! Попробуйте снова.\n";
-        break;
+bool handleUserChoice(MenuChoice choice, PoliceDatabase& database) {
+    try {
+        switch (choice) {
+        case MenuChoice::VEHICLE_INFO_BY_PLATE:
+            demonstrateVehicleSearch(database);
+            break;
+        case MenuChoice::OWNER_INFO_BY_PLATE:
+            demonstrateOwnerSearch(database);
+            break;
+        case MenuChoice::VEHICLE_INFO_BY_ENGINE:
+            demonstrateEngineNumberSearch(database);
+            break;
+        case MenuChoice::STOLEN_VEHICLES_LIST:
+            demonstrateStolenVehicles(database);
+            break;
+        case MenuChoice::ACCIDENT_VEHICLES_IN_PERIOD:
+            demonstrateAccidentVehicles(database);
+            break;
+        case MenuChoice::MOST_STOLEN_BRANDS:
+            demonstrateMostStolenBrands(database);
+            break;
+        case MenuChoice::DATABASE_STATISTICS:
+            showDatabaseStatistics(database);
+            break;
+        case MenuChoice::ADD_NEW_VEHICLE:
+            addNewVehicle(database);
+            break;
+        case MenuChoice::MARK_VEHICLE_STOLEN:
+            markVehicleAsStolen(database);
+            break;
+        case MenuChoice::EXIT:
+            return false;
+        default:
+            string invalidChoiceMessage = "Неверный выбор! Программа завершена.";
+            cout << invalidChoiceMessage << endl;
+            return false;
+        }
     }
+    catch (const exception& e) {
+        string errorMessage = "Произошла ошибка: ";
+        string exitMessage = "Программа завершена.";
+        cout << errorMessage << e.what() << "\n" << exitMessage << endl;
+        return false;
+    }
+    catch (...) {
+        string unknownErrorMessage = "Неизвестная ошибка. Программа завершена.";
+        cout << unknownErrorMessage << endl;
+        return false;
+    }
+
+    return true;
 }
 
 string getInput(const string& prompt) {
     string input;
     cout << prompt;
     getline(cin, input);
+
+    if (cin.fail()) {
+        string errorMessage = "Ошибка ввода. Программа завершена.";
+        cout << errorMessage << endl;
+        exit(1);
+    }
+
     return input;
 }
 
 void demonstrateVehicleSearch(PoliceDatabase& database) {
-    cout << "\n=== ПОИСК АВТОМОБИЛЯ ПО ГОСУДАРСТВЕННОМУ НОМЕРУ ===\n";
+    string searchTitle = "=== ПОИСК АВТОМОБИЛЯ ПО ГОСУДАРСТВЕННОМУ НОМЕРУ ===";
+    string foundInfoTitle = "=== НАЙДЕНА ИНФОРМАЦИЯ ===";
+    string ownerLabel = "Текущий владелец: ";
+    string accidentsLabel = "Участвовал в ДТП: ";
+    string timesLabel = " раз(а)";
+    string notFoundMessage = " не найден!";
 
-    string licensePlate = getInput("Введите гос. номер автомобиля: ");
+    cout << "\n" << searchTitle << "\n";
+
+    string licensePlatePrompt = "Введите гос. номер автомобиля: ";
+    string licensePlate = getInput(licensePlatePrompt);
     auto foundVehicle = database.findVehicleByLicensePlate(licensePlate);
 
     if (foundVehicle) {
-        cout << "\n=== НАЙДЕНА ИНФОРМАЦИЯ ===\n";
+        cout << "\n" << foundInfoTitle << "\n";
         cout << foundVehicle->getInfo() << "\n";
 
         auto owner = foundVehicle->getCurrentOwner();
         if (owner) {
-            cout << "Текущий владелец: " << owner->getInfo() << "\n";
+            cout << ownerLabel << owner->getInfo() << "\n";
         }
 
         auto accidents = foundVehicle->getAccidents();
         if (!accidents.empty()) {
-            cout << "Участвовал в ДТП: " << accidents.size() << " раз(а)\n";
+            cout << accidentsLabel << accidents.size() << timesLabel << "\n";
             for (const auto& accident : accidents) {
                 cout << "  - " << accident->getInfo() << "\n";
             }
         }
     }
     else {
-        cout << "Автомобиль с номером '" << licensePlate << "' не найден!\n";
+        cout << "Автомобиль с номером '" << licensePlate << "'" << notFoundMessage << endl;
     }
 }
 
 void demonstrateOwnerSearch(PoliceDatabase& database) {
-    cout << "\n ПОИСК ВЛАДЕЛЬЦА ПО ГОСУДАРСТВЕННОМУ НОМЕРУ \n";
+    string searchTitle = " ПОИСК ВЛАДЕЛЬЦА ПО ГОСУДАРСТВЕННОМУ НОМЕРУ ";
+    string foundInfoTitle = " НАЙДЕНА ИНФОРМАЦИЯ ";
+    string ownerLabel = "Владелец: ";
+    string vehiclesLabel = "Принадлежащие автомобили:";
+    string noVehiclesMessage = "У владельца нет зарегистрированных автомобилей";
+    string notFoundMessage = " не найден!";
 
-    string licensePlate = getInput("Введите гос. номер автомобиля: ");
+    cout << "\n" << searchTitle << "\n";
+
+    string licensePlatePrompt = "Введите гос. номер автомобиля: ";
+    string licensePlate = getInput(licensePlatePrompt);
     auto foundOwner = database.findOwnerByLicensePlate(licensePlate);
 
     if (foundOwner) {
-        cout << "\n НАЙДЕНА ИНФОРМАЦИЯ \n";
-        cout << "Владелец: " << foundOwner->getInfo() << "\n";
+        cout << "\n" << foundInfoTitle << "\n";
+        cout << ownerLabel << foundOwner->getInfo() << "\n";
 
         auto ownedVehicles = foundOwner->getOwnedVehicles();
         if (!ownedVehicles.empty()) {
-            cout << "Принадлежащие автомобили:\n";
+            cout << vehiclesLabel << "\n";
             for (size_t i = 0; i < ownedVehicles.size(); ++i) {
                 cout << i + 1 << ". " << ownedVehicles[i]->getInfo() << "\n";
             }
         }
         else {
-            cout << "У владельца нет зарегистрированных автомобилей\n";
+            cout << noVehiclesMessage << "\n";
         }
     }
     else {
-        cout << "Владелец автомобиля с номером '" << licensePlate << "' не найден!\n";
+        cout << "Владелец автомобиля с номером '" << licensePlate << "'" << notFoundMessage << endl;
     }
 }
 
 void demonstrateEngineNumberSearch(PoliceDatabase& database) {
-    cout << "\n ПОИСК АВТОМОБИЛЯ ПО НОМЕРУ ДВИГАТЕЛЯ \n";
+    const string searchTitle = " ПОИСК АВТОМОБИЛЯ ПО НОМЕРУ ДВИГАТЕЛЯ ";
+    const string foundInfoTitle = " НАЙДЕНА ИНФОРМАЦИЯ ";
+    const string mainInfoLabel = "Основная информация: ";
+    const string ownerHistoryLabel = "ИСТОРИЯ ВЛАДЕЛЬЦЕВ:";
+    const string noPreviousOwnersMessage = "  Нет предыдущих владельцев";
+    const string accidentHistoryLabel = "ИСТОРИЯ ДТП:";
+    const string noAccidentsMessage = "  Не участвовал в ДТП";
+    const string currentOwnerLabel = "ТЕКУЩИЙ ВЛАДЕЛЕЦ: ";
+    const string ownerNotSpecifiedMessage = "Не указан";
+    const string stolenStatusLabel = "СТАТУС УГОНА: ";
+    const string stolenMessage = "УГНАН";
+    const string notStolenMessage = "Не угнан";
+    const string notFoundMessage = " не найден!";
 
-    string engineNumber = getInput("Введите номер двигателя: ");
+    cout << "\n" << searchTitle << "\n";
+
+    string engineNumberPrompt = "Введите номер двигателя: ";
+    string engineNumber = getInput(engineNumberPrompt);
     auto foundVehicle = database.findVehicleByEngineNumber(engineNumber);
 
     if (foundVehicle) {
-        cout << "\n НАЙДЕНА ИНФОРМАЦИЯ \n";
-        cout << "Основная информация: " << foundVehicle->getInfo() << "\n\n";
+        cout << "\n" << foundInfoTitle << "\n";
+        cout << mainInfoLabel << foundVehicle->getInfo() << "\n\n";
 
-        cout << "ИСТОРИЯ ВЛАДЕЛЬЦЕВ:\n";
+        cout << ownerHistoryLabel << "\n";
         auto previousOwners = foundVehicle->getPreviousOwners();
         if (previousOwners.empty()) {
-            cout << "  Нет предыдущих владельцев\n";
+            cout << noPreviousOwnersMessage << "\n";
         }
         else {
             for (const auto& owner : previousOwners) {
@@ -296,10 +407,10 @@ void demonstrateEngineNumberSearch(PoliceDatabase& database) {
             }
         }
 
-        cout << "\nИСТОРИЯ ДТП:\n";
+        cout << "\n" << accidentHistoryLabel << "\n";
         auto accidents = foundVehicle->getAccidents();
         if (accidents.empty()) {
-            cout << "  Не участвовал в ДТП\n";
+            cout << noAccidentsMessage << "\n";
         }
         else {
             for (const auto& accident : accidents) {
@@ -307,36 +418,47 @@ void demonstrateEngineNumberSearch(PoliceDatabase& database) {
             }
         }
 
-        cout << "\nТЕКУЩИЙ ВЛАДЕЛЕЦ: ";
+        cout << "\n" << currentOwnerLabel;
         auto currentOwner = foundVehicle->getCurrentOwner();
         if (currentOwner) {
             cout << currentOwner->getInfo() << "\n";
         }
         else {
-            cout << "Не указан\n";
+            cout << ownerNotSpecifiedMessage << "\n";
         }
 
-        cout << "СТАТУС УГОНА: " << (foundVehicle->getIsStolen() ? "УГНАН" : "Не угнан") << "\n";
+        cout << stolenStatusLabel;
+        if (foundVehicle->getIsStolen()) {
+            cout << stolenMessage << "\n";
+        }
+        else {
+            cout << notStolenMessage << "\n";
+        }
     }
     else {
-        cout << "Автомобиль с номером двигателя '" << engineNumber << "' не найден!\n";
+        cout << "Автомобиль с номером двигателя '" << engineNumber << "'" << notFoundMessage << endl;
     }
 }
 
 void demonstrateStolenVehicles(PoliceDatabase& database) {
-    cout << "\n СПИСОК УГНАННЫХ АВТОМОБИЛЕЙ \n";
+    string listTitle = " СПИСОК УГНАННЫХ АВТОМОБИЛЕЙ ";
+    string noStolenMessage = "Угнанных автомобилей нет.";
+    string foundMessage = "Найдено угнанных автомобилей: ";
+    string ownerLabel = "   Владелец: ";
+
+    cout << "\n" << listTitle << "\n";
 
     auto stolenVehicles = database.getStolenVehicles();
     if (stolenVehicles.empty()) {
-        cout << "Угнанных автомобилей нет.\n";
+        cout << noStolenMessage << "\n";
     }
     else {
-        cout << "Найдено угнанных автомобилей: " << stolenVehicles.size() << "\n\n";
+        cout << foundMessage << stolenVehicles.size() << "\n\n";
         for (size_t i = 0; i < stolenVehicles.size(); ++i) {
             cout << i + 1 << ". " << stolenVehicles[i]->getInfo() << "\n";
             auto owner = stolenVehicles[i]->getCurrentOwner();
             if (owner) {
-                cout << "   Владелец: " << owner->getInfo() << "\n";
+                cout << ownerLabel << owner->getInfo() << "\n";
             }
             cout << "---\n";
         }
@@ -344,18 +466,27 @@ void demonstrateStolenVehicles(PoliceDatabase& database) {
 }
 
 void demonstrateAccidentVehicles(PoliceDatabase& database) {
-    cout << "\n АВТОМОБИЛИ В ДТП ЗА ПЕРИОД \n";
+    string listTitle = " АВТОМОБИЛИ В ДТП ЗА ПЕРИОД ";
+    string noAccidentsMessage = "В указанный период ДТП не зарегистрировано.";
+    string foundMessage = "Автомобили, попавшие в ДТП: ";
+    string startDateMessage = "Введите начальную дату:";
+    string endDateMessage = "Введите конечную дату:";
+    string dayPrompt = "День: ";
+    string monthPrompt = "Месяц: ";
+    string yearPrompt = "Год: ";
+
+    cout << "\n" << listTitle << "\n";
 
     int startDay, startMonth, startYear, endDay, endMonth, endYear;
-    cout << "Введите начальную дату:\n";
-    cout << "День: "; cin >> startDay;
-    cout << "Месяц: "; cin >> startMonth;
-    cout << "Год: "; cin >> startYear;
+    cout << startDateMessage << "\n";
+    cout << dayPrompt; cin >> startDay;
+    cout << monthPrompt; cin >> startMonth;
+    cout << yearPrompt; cin >> startYear;
 
-    cout << "Введите конечную дату:\n";
-    cout << "День: "; cin >> endDay;
-    cout << "Месяц: "; cin >> endMonth;
-    cout << "Год: "; cin >> endYear;
+    cout << endDateMessage << "\n";
+    cout << dayPrompt; cin >> endDay;
+    cout << monthPrompt; cin >> endMonth;
+    cout << yearPrompt; cin >> endYear;
     cin.ignore();
 
     tm startDate = {};
@@ -371,10 +502,10 @@ void demonstrateAccidentVehicles(PoliceDatabase& database) {
     auto accidentVehicles = database.getAccidentVehiclesInPeriod(startDate, endDate);
 
     if (accidentVehicles.empty()) {
-        cout << "В указанный период ДТП не зарегистрировано.\n";
+        cout << noAccidentsMessage << "\n";
     }
     else {
-        cout << "Автомобили, попавшие в ДТП: " << accidentVehicles.size() << "\n\n";
+        cout << foundMessage << accidentVehicles.size() << "\n\n";
         for (size_t i = 0; i < accidentVehicles.size(); ++i) {
             cout << i + 1 << ". " << accidentVehicles[i]->getInfo() << "\n";
         }
@@ -382,31 +513,50 @@ void demonstrateAccidentVehicles(PoliceDatabase& database) {
 }
 
 void demonstrateMostStolenBrands(PoliceDatabase& database) {
-    cout << "\n НАИБОЛЕЕ УГОНЯЕМЫЕ МАРКИ АВТОМОБИЛЕЙ \n";
+    string listTitle = " НАИБОЛЕЕ УГОНЯЕМЫЕ МАРКИ АВТОМОБИЛЕЙ ";
+    string noDataMessage = "Нет данных об угонах.";
+    string ratingMessage = "Рейтинг марок по количеству угонов:";
+    string theftSingular = " угон";
+    string theftPlural = " угона";
+
+    cout << "\n" << listTitle << "\n";
 
     auto mostStolen = database.getMostStolenBrands();
     if (mostStolen.empty()) {
-        cout << "Нет данных об угонах.\n";
+        cout << noDataMessage << "\n";
     }
     else {
-        cout << "Рейтинг марок по количеству угонов:\n\n";
+        cout << ratingMessage << "\n\n";
         for (size_t i = 0; i < mostStolen.size(); ++i) {
             cout << i + 1 << ". " << mostStolen[i].first << " - " << mostStolen[i].second;
-            cout << (mostStolen[i].second == 1 ? " угон" : " угона") << "\n";
+            if (mostStolen[i].second == 1) {
+                cout << theftSingular << "\n";
+            }
+            else {
+                cout << theftPlural << "\n";
+            }
         }
     }
 }
 
 void showDatabaseStatistics(PoliceDatabase& database) {
-    cout << "\n СТАТИСТИКА БАЗЫ ДАННЫХ ГАИ \n";
-    cout << "Всего владельцев: " << database.getAllOwners().size() << "\n";
-    cout << "Всего автомобилей: " << database.getAllVehicles().size() << "\n";
-    cout << "Всего ДТП: " << database.getAllAccidents().size() << "\n";
-    cout << "Угнанных автомобилей: " << database.getStolenVehicles().size() << "\n";
+    string statsTitle = " СТАТИСТИКА БАЗЫ ДАННЫХ ГАИ ";
+    string totalOwnersMessage = "Всего владельцев: ";
+    string totalVehiclesMessage = "Всего автомобилей: ";
+    string totalAccidentsMessage = "Всего ДТП: ";
+    string stolenVehiclesMessage = "Угнанных автомобилей: ";
+    string mostStolenMessage = "Самая угоняемая марка: ";
+    string theftsMessage = " угонов";
+
+    cout << "\n" << statsTitle << "\n";
+    cout << totalOwnersMessage << database.getAllOwners().size() << "\n";
+    cout << totalVehiclesMessage << database.getAllVehicles().size() << "\n";
+    cout << totalAccidentsMessage << database.getAllAccidents().size() << "\n";
+    cout << stolenVehiclesMessage << database.getStolenVehicles().size() << "\n";
 
     auto mostStolen = database.getMostStolenBrands();
     if (!mostStolen.empty()) {
-        cout << "Самая угоняемая марка: " << mostStolen[0].first << " (" << mostStolen[0].second << " угонов)\n";
+        cout << mostStolenMessage << mostStolen[0].first << " (" << mostStolen[0].second << theftsMessage << ")\n";
     }
 }
 
@@ -416,11 +566,6 @@ void createTestData(PoliceDatabase& database) {
     auto owner3 = make_shared<Owner>("4500778899", "Сидорова Мария Сергеевна", "г. Москва, пр. Мира, д. 25");
     auto previousOwner = make_shared<Owner>("4500998877", "Кузнецов Алексей", "г. Москва, ул. Садовая, д. 5");
 
-    database.addOwner(owner1);
-    database.addOwner(owner2);
-    database.addOwner(owner3);
-    database.addOwner(previousOwner);
-
     auto vehicle1 = make_shared<Vehicle>("A123BC777", "Toyota", "Camry", "Черный", 2018, "T123456789");
     auto vehicle2 = make_shared<Vehicle>("B456DE777", "BMW", "X5", "Белый", 2020, "B987654321");
     auto vehicle3 = make_shared<Vehicle>("C789FG777", "Lada", "Granta", "Красный", 2015, "L555555555");
@@ -429,17 +574,22 @@ void createTestData(PoliceDatabase& database) {
 
     vehicle1->setCurrentOwner(owner1);
     vehicle1->addPreviousOwner(previousOwner);
+    owner1->addVehicle(vehicle1);
 
     vehicle2->setCurrentOwner(owner2);
     vehicle2->setStolen(true);
+    owner2->addVehicle(vehicle2);
 
     vehicle3->setCurrentOwner(owner3);
+    owner3->addVehicle(vehicle3);
 
     vehicle4->setCurrentOwner(owner1);
     vehicle4->setStolen(true);
+    owner1->addVehicle(vehicle4);
 
     vehicle5->setCurrentOwner(owner2);
     vehicle5->setStolen(true);
+    owner2->addVehicle(vehicle5);
 
     database.addVehicle(vehicle1);
     database.addVehicle(vehicle2);

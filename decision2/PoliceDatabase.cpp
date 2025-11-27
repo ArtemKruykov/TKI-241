@@ -5,10 +5,20 @@
 
 void PoliceDatabase::addVehicle(std::shared_ptr<Vehicle> vehicle) {
     vehicles.push_back(vehicle);
-}
 
-void PoliceDatabase::addOwner(std::shared_ptr<Owner> owner) {
-    owners.push_back(owner);
+    // Автоматически добавляем владельца автомобиля в базу данных
+    auto owner = vehicle->getCurrentOwner();
+    if (owner) {
+        // Проверяем, нет ли уже такого владельца в базе
+        auto it = std::find_if(owners.begin(), owners.end(),
+            [&](const std::shared_ptr<Owner>& existingOwner) {
+                return existingOwner->getPassportNumber() == owner->getPassportNumber();
+            });
+
+        if (it == owners.end()) {
+            owners.push_back(owner);
+        }
+    }
 }
 
 void PoliceDatabase::addAccident(std::shared_ptr<Accident> accident) {
@@ -78,7 +88,6 @@ std::vector<std::pair<std::string, int>> PoliceDatabase::getMostStolenBrands() c
         }
     }
 
-    // Преобразование в вектор и сортировка по количеству угонов
     std::vector<std::pair<std::string, int>> result(brandCount.begin(), brandCount.end());
     std::sort(result.begin(), result.end(),
         [](const std::pair<std::string, int>& a, const std::pair<std::string, int>& b) {

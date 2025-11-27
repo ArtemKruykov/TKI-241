@@ -10,7 +10,6 @@
 
 /**
  * @brief Основной класс базы данных ГАИ
- *
  * Класс PoliceDatabase представляет централизованную базу данных
  * для хранения и управления информацией о транспортных средствах,
  * владельцах и дорожно-транспортных происшествиях.
@@ -28,12 +27,6 @@ public:
      * @param vehicle Умный указатель на транспортное средство
      */
     void addVehicle(std::shared_ptr<Vehicle> vehicle);
-
-    /**
-     * @brief Добавить владельца в базу данных
-     * @param owner Умный указатель на владельца
-     */
-    void addOwner(std::shared_ptr<Owner> owner);
 
     /**
      * @brief Добавить запись о ДТП в базу данных
@@ -101,19 +94,11 @@ public:
     std::vector<std::shared_ptr<Accident>> getAllAccidents() const;
 };
 
-// Декларации функций для работы с меню
-
 /**
  * @brief Добавить новое транспортное средство в базу данных через пользовательский ввод
  * @param database Ссылка на базу данных ГАИ
  */
 void addNewVehicle(PoliceDatabase& database);
-
-/**
- * @brief Добавить нового владельца в базу данных через пользовательский ввод
- * @param database Ссылка на базу данных ГАИ
- */
-void addNewOwner(PoliceDatabase& database);
 
 /**
  * @brief Отметить транспортное средство как угнанное по государственному номеру
