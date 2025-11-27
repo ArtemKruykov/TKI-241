@@ -131,6 +131,16 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Accident.h" />
+    <ClInclude Include="Owner.h" />
+    <ClInclude Include="PoliceDatabase.h" />
+    <ClInclude Include="Vehicle.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="Accident.cpp" />
+    <ClCompile Include="Owner.cpp" />
+    <ClCompile Include="PoliceDatabase.cpp" />
+    <ClCompile Include="Vehicle.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

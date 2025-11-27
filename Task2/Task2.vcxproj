@@ -131,6 +131,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="main.cpp" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\decision2\decision2.vcxproj">
       <Project>{83f7f816-e9b1-42bd-8fea-a03d0e2e5cb7}</Project>
     </ProjectReference>
